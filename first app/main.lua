@@ -13,6 +13,8 @@ local platform = display.newImageRect( "./images/platform.png", 300, 50 )
 platform.x = display.contentCenterX
 platform.y = display.contentHeight-25
 
+local balloons = {}
+local currentX = 5;
 local balloon = display.newImage("./images/balloon.png", 100, 50)
 balloon.x = display.contentCenterX
 balloon.y = display.contentCenterY
