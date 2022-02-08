@@ -65,7 +65,7 @@ local objectSheet = graphics.newImageSheet( "./images/gameObjects.png", sheetOpt
 -- Load spacey background
 local backGroup = display.newGroup()
 
-local background = display.newImageRect("./images/background.png", 800, 1400 )
+local background = display.newImageRect("./images/galaxy.jpg", 800, 1400 )
 background.x = display.contentCenterX
 background.y = display.contentCenterY
 
@@ -84,8 +84,8 @@ backGroup:insert(background)
 
 --lives and the big score numbers 
 local uiGroup = display.newGroup()
-livesText = display.newText( "Lives: " .. lives, 200, 80, native.systemFont, 36 )
-scoreText = display.newText( "Score: " .. score, 400, 80, native.systemFont, 36 )
+livesText = display.newText( "Lives: " .. lives, 300, 80, native.systemFont, 36 )
+scoreText = display.newText( "Score: " .. score, 500, 80, native.systemFont, 36 )
 uiGroup:insert(livesText)
 uiGroup:insert(scoreText)
 
@@ -100,7 +100,7 @@ end
 --create asteroids to crush puny ship lol
 local function createAsteroid()
     local mainGroup = display.newGroup()
-    local newAsteroid = display.newImageRect( objectSheet, 1, 102, 85 )
+    local newAsteroid = display.newImageRect( "./images/alien.png", 100, 102, 85 )
     
     table.insert( asteroidsTable, newAsteroid )
     physics.addBody( newAsteroid, "dynamic", { radius=40, bounce=0.8 } )
@@ -173,6 +173,7 @@ local function gameLoop()
     createAsteroid()
     --get rid of asteroid
     for i = #asteroidsTable, 1, -1 do
+        local thisAsteroid = asteroidsTable[i]
         if ( thisAsteroid.x < -100 or
         thisAsteroid.x > display.contentWidth + 100 or
         thisAsteroid.y < -100 or
