@@ -59,7 +59,9 @@ local sheetOptions =
             height = 40
         },
     },
+    
 }
+local objectSheet = graphics.newImageSheet( "./images/gameObjects.png", sheetOptions )
 -- Load spacey background
 local backGroup = display.newGroup()
 
@@ -67,5 +69,175 @@ local background = display.newImageRect("./images/background.png", 800, 1400 )
 background.x = display.contentCenterX
 background.y = display.contentCenterY
 
+
+
+
+local mainGroup = display.newGroup()
+ship = display.newImageRect(objectSheet, 4, 98, 79 )
+ship.x = display.contentCenterX
+ship.y = display.contentHeight - 100
+physics.addBody( ship, { radius=30, isSensor=true } )
+ship.myName = "ship"
+mainGroup:insert(ship)
+
 backGroup:insert(background)
-local objectSheet = graphics.newImageSheet( "./images/gameObjects.png", sheetOptions )
+
+--lives and the big score numbers 
+local uiGroup = display.newGroup()
+livesText = display.newText( "Lives: " .. lives, 200, 80, native.systemFont, 36 )
+scoreText = display.newText( "Score: " .. score, 400, 80, native.systemFont, 36 )
+uiGroup:insert(livesText)
+uiGroup:insert(scoreText)
+
+--hide status bar at top of screen
+display.setStatusBar( display.HiddenStatusBar )
+
+--update lives and score
+local function updateText()
+    livesText.text = "Lives: " .. lives
+    scoreText.text = "Score: " .. score
+end
+--create asteroids to crush puny ship lol
+local function createAsteroid()
+    local mainGroup = display.newGroup()
+    local newAsteroid = display.newImageRect( objectSheet, 1, 102, 85 )
+    
+    table.insert( asteroidsTable, newAsteroid )
+    physics.addBody( newAsteroid, "dynamic", { radius=40, bounce=0.8 } )
+    newAsteroid.myName = "asteroid" 
+    local whereFrom = math.random(1, 3 ) 
+    if ( whereFrom == 1 ) then
+
+        newAsteroid.x = -60
+        newAsteroid.y = math.random( 500 )
+        newAsteroid:setLinearVelocity( math.random( 40,120 ), math.random( 20,60 ) )
+    elseif ( whereFrom == 2 ) then
+   
+        newAsteroid.x = math.random( display.contentWidth )
+        newAsteroid.y = -60
+        newAsteroid:setLinearVelocity( math.random( -40,40 ), math.random( 40,120 ) )
+    elseif ( whereFrom == 3 ) then
+      
+        newAsteroid.x = display.contentWidth + 60
+        newAsteroid.y = math.random( 500 )
+        newAsteroid:setLinearVelocity( math.random( -120,-40 ), math.random( 20,60 ) )
+    end
+    newAsteroid:applyTorque( math.random( -6,6 ) )
+    mainGroup:insert(newAsteroid)
+ 
+end
+--make gun go pew pew
+local function fireLaser()
+    local mainGroup = display.newGroup()
+    local newLaser = display.newImageRect(objectSheet, 5, 14, 40 )
+    physics.addBody( newLaser, "dynamic", { isSensor=true } )
+    newLaser.isBullet = true
+    newLaser.myName = "laser"
+ 
+    newLaser.x = ship.x
+    newLaser.y = ship.y
+    mainGroup:insert(newLaser)
+    newLaser:toBack()
+ 
+    transition.to( newLaser, { y=-40, time=500,
+        onComplete = function() display.remove( newLaser ) end
+    } )
+end
+ship:addEventListener( "tap", fireLaser )
+
+--move de ship
+local function dragShip( event )
+ 
+    local ship = event.target
+    local phase = event.phase
+ 
+    if ( "began" == phase ) then
+        display.currentStage:setFocus( ship )
+        ship.touchOffsetX = event.x - ship.x
+
+    elseif ( "moved" == phase ) then
+        ship.x = event.x - ship.touchOffsetX
+
+    elseif ( "ended" == phase or "cancelled" == phase ) then
+        -- Release touch focus on the ship
+        display.currentStage:setFocus( nil )
+
+    end
+    return true 
+end
+ship:addEventListener( "touch", dragShip )
+
+--time to get loopy, game loopy
+local function gameLoop()
+ 
+    createAsteroid()
+    --get rid of asteroid
+    for i = #asteroidsTable, 1, -1 do
+        if ( thisAsteroid.x < -100 or
+        thisAsteroid.x > display.contentWidth + 100 or
+        thisAsteroid.y < -100 or
+        thisAsteroid.y > display.contentHeight + 100 )
+   then
+       display.remove( newAsteroid )
+       table.remove( asteroidsTable, i )
+ 
+    end
+ end
+end
+gameLoopTimer = timer.performWithDelay( 500, gameLoop, 0 )
+
+local function restoreShip()
+ 
+    ship.isBodyActive = false
+    ship.x = display.contentCenterX
+    ship.y = display.contentHeight - 100
+ 
+    -- Fade in the ship
+    transition.to( ship, { alpha=1, time=4000,
+        onComplete = function()
+            ship.isBodyActive = true
+            died = false
+        end
+    } )
+end
+local function onCollision( event )
+ 
+    if ( event.phase == "began" ) then
+ 
+        local obj1 = event.object1
+        local obj2 = event.object2
+        if ( ( obj1.myName == "laser" and obj2.myName == "asteroid" ) or
+             ( obj1.myName == "asteroid" and obj2.myName == "laser" ) )
+        then
+            --remove laser and astteroid
+            display.remove( obj1 )
+            display.remove( obj2 )
+            for i = #asteroidsTable, 1, -1 do
+                if ( asteroidsTable[i] == obj1 or asteroidsTable[i] == obj2 ) then
+                    table.remove( asteroidsTable, i )
+                    break
+                end
+            end
+             -- up the score
+             score = score + 100
+             scoreText.text = "Score: " .. score
+            elseif ( ( obj1.myName == "ship" and obj2.myName == "asteroid" ) or
+            ( obj1.myName == "asteroid" and obj2.myName == "ship" ) )
+            then
+                if ( died == false ) then
+                    died = true
+                        -- lives
+                    lives = lives - 1
+                    livesText.text = "Lives: " .. lives
+
+                    if ( lives == 0 ) then
+                        display.remove( ship )
+                    else
+                        ship.alpha = 0
+                        timer.performWithDelay( 1000, restoreShip )
+                    end
+                end
+        end
+    end
+end
+Runtime:addEventListener( "collision", onCollision )
