@@ -5,24 +5,21 @@
     Names of my Pets
   </title>
 </head>
-
 <body>
-  <img src = "images/dogs.PNG" width = 450 alt = "an image of my dogs Clara and Fergus"/> <img src ="images/teacup.jpg" width = 450 alt ="image of teacup the cat"/> <img src ="images/oscar.PNG" width = 450 alt ="oscar kitty"/>
-  <h1>
-    Look at these cuties
-</h1>
 
-<h2>
   <script type="text/javascript" src="jquery.js"></script> 
   <script type="text/javascript"> 
     $.getJSON("http://mart462.silverleaf-consulting.com/index_aidan.php?callback=?", 
     function(result) { 
+      var info;
       for(var i in result) { 
-        document.write (i + ":" + result [i]) + "<br>";  
+        info += (i + ":" + result [i]) + "<br>";  
       } 
+      document.getElementById("name").innerHTML = info;
     }); 
   </script>
-</h2>
+  <div id = "name"> </div>
+ <img src = "images/dogs.PNG" width =350 alt = "fergus and clara"/> <img src = "images/teacup.jpg" width = 350 alt ="teacup the cat"/> <img src = "images/oscar.PNG" width = 350 alt = "oscar kitty"/>
 </body>
 
 </html>
